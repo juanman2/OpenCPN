@@ -7216,7 +7216,7 @@ void MyFrame::OnFrameTimer1( wxTimerEvent& event )
     }
     g_tick++;
 
-//      Listen for quitflag to be set, requesting application close
+    //      Listen for quitflag to be set, requesting application close
     if( quitflag ) {
         wxLogMessage( _T("Got quitflag from SIGNAL") );
         FrameTimer1.Stop();
@@ -7242,7 +7242,7 @@ void MyFrame::OnFrameTimer1( wxTimerEvent& event )
         }
     }
 
-//  Update and check watchdog timer for GPS data source
+    //  Update and check watchdog timer for GPS data source
     gGPS_Watchdog--;
     if( gGPS_Watchdog <= 0 ) {
         bGPSValid = false;
@@ -7255,7 +7255,7 @@ void MyFrame::OnFrameTimer1( wxTimerEvent& event )
         gCog = NAN;
     }
 
-//  Update and check watchdog timer for Mag Heading data source
+    //  Update and check watchdog timer for Mag Heading data source
     gHDx_Watchdog--;
     if( gHDx_Watchdog <= 0 ) {
         gHdm = NAN;
@@ -7263,7 +7263,7 @@ void MyFrame::OnFrameTimer1( wxTimerEvent& event )
                 _T("   ***HDx Watchdog timeout...") );
     }
 
-//  Update and check watchdog timer for True Heading data source
+    //  Update and check watchdog timer for True Heading data source
     gHDT_Watchdog--;
     if( gHDT_Watchdog <= 0 ) {
         g_bHDT_Rx = false;
@@ -7457,14 +7457,14 @@ void MyFrame::OnFrameTimer1( wxTimerEvent& event )
     
             cc->DrawBlinkObjects();
 
-//      Update the active route, if any
+	    //      Update the active route, if any
             if( g_pRouteMan->UpdateProgress() ) {
-        //    This RefreshRect will cause any active routepoint to blink
-                if( g_pRouteMan->GetpActiveRoute() )
-                    cc->RefreshRect( g_blink_rect, false );
+	        //    This RefreshRect will cause any active routepoint to blink
+	        if( g_pRouteMan->GetpActiveRoute() )
+		  cc->RefreshRect( g_blink_rect, false );
             }
 
-//  Force own-ship drawing parameters
+	    //  Force own-ship drawing parameters
             cc->SetOwnShipState( SHIP_NORMAL );
 
             if( cc->GetQuiltMode() ) {
@@ -8507,6 +8507,10 @@ void MyFrame::OnEvtPlugInMessage( OCPN_MsgEvent & event )
                     w[i][_T("Description")] = (*itp)->GetDescription();
                     w[i][_T("GUID")] = (*itp)->m_GUID;
                     w[i][_T("ArrivalRadius")] = (*itp)->GetWaypointArrivalRadius();
+		    w[i][_T("PlannedSpeed")] = (*itp)->GetPlannedSpeed();
+		    w[i][_T("Course")] = (*itp)->GetCourse();
+
+
                     wxHyperlinkListNode *node = (*itp)->m_HyperlinkList->GetFirst();
                     if(node)
                     {

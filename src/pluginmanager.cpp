@@ -227,6 +227,7 @@ wxString GetPluginDataDir(const char* plugin_name)
             more = tryDir.GetNext(&next);
         }
     }
+    
     wxLogMessage(_T("Warnińg: no data directory found, using \"\""));
     return "";
 }
@@ -3248,7 +3249,6 @@ PlugIn_Waypoint::PlugIn_Waypoint(double lat, double lon,
 PlugIn_Waypoint::~PlugIn_Waypoint()
 {
 }
-
 //      PlugInRoute implementation
 PlugIn_Route::PlugIn_Route(void )
 {
@@ -3393,9 +3393,16 @@ bool UpdateSingleWaypoint( PlugIn_Waypoint *pwaypoint )
         prp->SetIconName( pwaypoint->m_IconName );
         prp->SetName( pwaypoint->m_MarkName );
         prp->m_MarkDescription = pwaypoint->m_MarkDescription;
-		prp->SetVisible(pwaypoint->m_IsVisible);
-		prp->SetCreateTime(pwaypoint->m_CreateTime);
+        prp->SetVisible(pwaypoint->m_IsVisible);
+        prp->SetCreateTime(pwaypoint->m_CreateTime);
 
+	// Initialize speed, course if this is an Ex(tended) Waypoint
+        PlugIn_Waypoint_Ex *pe = dynamic_cast<PlugIn_Waypoint_Ex *>(pwaypoint);
+        if (pe) {
+	  prp->SetPlannedSpeed(pe->m_speed);
+	  prp->SetCourse(pe->m_course);
+        }
+		
         //  Transcribe (clone) the html HyperLink List, if present
 
         if( pwaypoint->m_HyperlinkList ) {
@@ -3471,17 +3478,27 @@ static void PlugInFromRoutePoint(PlugIn_Waypoint *dst, /* const*/ RoutePoint *sr
     }
 }
 
+static void PlugInWaypointExFromRoutePoint(PlugIn_Waypoint_Ex *dst, /* const*/ RoutePoint *src);
+
+
 bool GetSingleWaypoint(wxString GUID, PlugIn_Waypoint *pwaypoint)
 {
     //  Find the RoutePoint
-    bool b_found = false;
     RoutePoint *prp = pWayPointMan->FindRoutePointByGUID( GUID );
 
     if(!prp)
         return false;
 
-    PlugInFromRoutePoint(pwaypoint, prp);
+    if (!pwaypoint) {
+      return false;
+    }
 
+    PlugIn_Waypoint_Ex *wpEx = dynamic_cast<PlugIn_Waypoint_Ex *>(pwaypoint);
+    if (wpEx) {
+      PlugInWaypointExFromRoutePoint(wpEx, prp);
+    } else {
+      PlugInFromRoutePoint(pwaypoint, prp);
+    }      
     return true;
 }
 
@@ -6813,7 +6830,7 @@ std::unique_ptr<PlugIn_Route> GetRoute_Plugin( const wxString& GUID)
    while( node ) {
         src_wp = node->GetData();
 
-        PlugIn_Waypoint *dst_wp = new PlugIn_Waypoint();
+        PlugIn_Waypoint_Ex *dst_wp = new PlugIn_Waypoint_Ex();
         PlugInFromRoutePoint(dst_wp, src_wp);
 
         dst_route->pWaypointList->Append( dst_wp );
@@ -6937,3 +6954,49 @@ int GetLatLonFormat()
 {
     return g_iSDMMFormat;
 }
+
+/* API 1.1? */
+
+PlugIn_Waypoint_Ex::PlugIn_Waypoint_Ex(double lat, double lon,
+                const wxString& icon_ident, const wxString& wp_name,
+                const wxString& GUID)
+{
+  m_speed = 0;
+  m_course = 0;
+}
+
+PlugIn_Waypoint_Ex::PlugIn_Waypoint_Ex(double lat, double lon,
+                const wxString& icon_ident, const wxString& wp_name,
+				       const wxString& GUID,
+				       double speed, double course)
+{
+  PlugIn_Waypoint_Ex(lat, lon, icon_ident, wp_name, GUID);
+  m_speed = speed;
+  m_course = course;
+}
+
+
+PlugIn_Waypoint_Ex::~PlugIn_Waypoint_Ex()
+{
+}
+
+// translate O route class to Plugin one, with extended params
+static void PlugInWaypointExFromRoutePoint(PlugIn_Waypoint_Ex *dst, /* const*/ RoutePoint *src)
+{
+  PlugIn_Waypoint *wp = dynamic_cast<PlugIn_Waypoint *>(dst);
+  if (wp) {
+    PlugInFromRoutePoint(wp, src);
+  }
+    
+  dst->m_speed = src->GetPlannedSpeed();
+  dst->m_course = src->GetCourse();
+}
+
+// This is the extension version of GetWaypoint_Plugin()
+std::unique_ptr<PlugIn_Waypoint_Ex> GetWaypointEx_Plugin( const wxString& GUID)
+{
+   std::unique_ptr<PlugIn_Waypoint_Ex> w(new PlugIn_Waypoint_Ex);
+   GetSingleWaypoint(GUID, w.get());
+   return w;
+}
+

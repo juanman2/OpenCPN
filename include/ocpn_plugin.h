@@ -600,6 +600,24 @@ public:
 
 };
 
+
+class DECL_EXP PlugIn_Waypoint_Ex : public PlugIn_Waypoint
+{
+public:
+    PlugIn_Waypoint_Ex() {};
+    PlugIn_Waypoint_Ex(double lat, double lon,
+                const wxString& icon_ident, const wxString& wp_name,
+		       const wxString& GUID);
+    PlugIn_Waypoint_Ex(double lat, double lon,
+                const wxString& icon_ident, const wxString& wp_name,
+		       const wxString& GUID,
+		       double speed, double course);
+    ~PlugIn_Waypoint_Ex();
+    double             m_speed;    // Added in Extended Version
+    double             m_course;   // Added in Extended Version
+};
+
+
 WX_DECLARE_LIST(PlugIn_Waypoint, Plugin_WaypointList);
 
 class DECL_EXP PlugIn_Route
